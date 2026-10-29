@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Suite de Testes - Lista de Tarefas</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background-color: #f8fafc;
+      padding: 30px 20px;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    .test-dashboard {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    .test-header {
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .test-header h1 {
+      font-size: 1.5rem;
+      color: #0f172a;
+    }
+    .test-status-banner {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .banner-success {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .banner-fail {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .test-list-results {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .test-item-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.925rem;
+    }
+    .test-item-card.pass {
+      background-color: #f0fdf4;
+      border-left: 4px solid #10b981;
+      color: #14532d;
+    }
+    .test-item-card.fail {
+      background-color: #fef2f2;
+      border-left: 4px solid #ef4444;
+      color: #7f1d1d;
+    }
+    .test-icon {
+      font-size: 1.1rem;
+    }
+    .hidden-preview {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="test-dashboard">
+    <div class="test-header">
+      <h1>🧪 Painel de Verificação e Testes Automatizados</h1>
+      <p style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">
+        Testando todas as funcionalidades da Lista de Tarefas (Adição, Conclusão, Remoção, Filtros e Estilização Visual)
+      </p>
+    </div>
+
+    <div id="status-banner" class="test-status-banner">Executando verificações...</div>
+
+    <ul id="test-results" class="test-list-results"></ul>
+  </div>
+
+  <!-- Contêiner oculto para executar a aplicação nos testes -->
+  <div class="hidden-preview">
+    <form id="task-form">
+      <input type="text" id="task-input" />
+      <button type="submit" id="add-btn"></button>
+    </form>
+    <span id="task-counter"></span>
+    <button class="filter-btn active" data-filter="all"></button>
+    <button class="filter-btn" data-filter="pending"></button>
+    <button class="filter-btn" data-filter="completed"></button>
+    <ul id="task-list"></ul>
+    <div id="empty-state"></div>
+  </div>
+
+  <!-- Importa o código da aplicação -->
+  <script src="script.js"></script>
+
+  <!-- Script que executa os testes -->
+  <script>
+    const testResultsEl = document.getElementById("test-results");
+    const bannerEl = document.getElementById("status-banner");
+    const results = [];
+
+    function recordTest(pass, description) {
+      results.push({ pass, description });
+      const li = document.createElement("li");
+      li.className = `test-item-card ${pass ? "pass" : "fail"}`;
+      li.innerHTML = `
+        <span class="test-icon">${pass ? "✅" : "❌"}</span>
+        <span>${description}</span>
+      `;
+      testResultsEl.appendChild(li);
+    }
+
+    try {
+      // 1. Limpa dados de teste
+      try { localStorage.clear(); } catch(e) {}
+      tasks = [];
+      currentFilter = 'all';
+      render();
+
+      recordTest(tasks.length === 0, "1. Inicialização: Lista inicia zerada.");
+
+      // 2. Adicionar tarefa pendente
+      addTask("Comprar mantimentos");
+      recordTest(tasks.length === 1 && !tasks[0].completed, "2. Adicionar: Tarefa adicionada com status pendente.");
+
+      const item1 = taskList.querySelector(".task-item");
+      const isPendingClass = item1 && item1.classList.contains("pending") && !item1.classList.contains("completed");
+      recordTest(isPendingClass, "3. Visual Pendente: Tarefa possui classe CSS 'pending' e não 'completed'.");
+
+      const badgePending = item1 ? item1.querySelector(".status-badge.badge-pending") : null;
+      recordTest(badgePending !== null, "4. Visual Pendente: Exibe a etiqueta destacada 'Pendente'.");
+
+      // 3. Concluir tarefa
+      toggleTask(tasks[0].id);
+      recordTest(tasks[0].completed === true, "5. Concluir Tarefa: Status alterado para concluído (completed = true).");
+
+      const itemConcluido = taskList.querySelector(".task-item");
+      const isCompletedClass = itemConcluido && itemConcluido.classList.contains("completed") && !itemConcluido.classList.contains("pending");
+      recordTest(isCompletedClass, "6. Visual Concluída: Tarefa agora possui classe CSS 'completed' (borda verde e fundo esverdeado).");
+
+      const badgeCompleted = itemConcluido ? itemConcluido.querySelector(".status-badge.badge-completed") : null;
+      recordTest(badgeCompleted !== null, "7. Visual Concluída: Exibe a etiqueta '✓ Concluída'.");
+
+      const checkbox = itemConcluido ? itemConcluido.querySelector(".task-checkbox") : null;
+      recordTest(checkbox && checkbox.checked, "8. Visual Concluída: Checkbox está marcado.");
+
+      // 4. Progresso / Contador
+      recordTest(taskCounter.textContent.includes("1 de 1"), "9. Contador: Atualizado para '1 de 1 tarefa(s) concluída(s)'.");
+
+      // 5. Segunda tarefa e coexistência de estilos
+      addTask("Praticar lógica de programação");
+      const items = taskList.querySelectorAll(".task-item");
+      recordTest(items.length === 2, "10. Múltiplas Tarefas: Duas tarefas no DOM simultaneamente.");
+      recordTest(items[0].classList.contains("pending") && items[1].classList.contains("completed"), 
+        "11. Diferenciação Simultânea: Primeira tarefa está visualmente pendente e a segunda concluída.");
+
+      // 6. Filtros
+      currentFilter = 'pending';
+      render();
+      recordTest(taskList.querySelectorAll(".task-item").length === 1, "12. Filtro Pendentes: Exibe somente a pendente.");
+
+      currentFilter = 'completed';
+      render();
+      recordTest(taskList.querySelectorAll(".task-item").length === 1, "13. Filtro Concluídas: Exibe somente a concluída.");
+
+      currentFilter = 'all';
+      render();
+      recordTest(taskList.querySelectorAll(".task-item").length === 2, "14. Filtro Todas: Exibe ambas as tarefas.");
+
+      // 7. Exclusão
+      const idParaRemover = tasks[0].id;
+      deleteTask(idParaRemover);
+      recordTest(tasks.length === 1, "15. Remoção: Tarefa excluída corretamente.");
+
+      // 8. Resumo final
+      const allPassed = results.every(r => r.pass);
+      if (allPassed) {
+        bannerEl.className = "test-status-banner banner-success";
+        bannerEl.textContent = `🎉 Todos os ${results.length} testes passaram com sucesso! Todas as funcionalidades operam normalmente.`;
+      } else {
+        bannerEl.className = "test-status-banner banner-fail";
+        bannerEl.textContent = "⚠️ Alguns testes falharam. Verifique a lista abaixo.";
+      }
+    } catch(err) {
+      recordTest(false, "Erro inesperado ao executar testes: " + err.message);
+      bannerEl.className = "test-status-banner banner-fail";
+      bannerEl.textContent = "Erro na execução da suíte de testes.";
+    }
+  </script>
+</body>
+</html>

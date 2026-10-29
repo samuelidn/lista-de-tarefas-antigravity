@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Tarefas</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Fonte moderna do Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Container principal centralizado na tela -->
+  <main class="app-container">
+    
+    <!-- Cabeçalho da aplicação -->
+    <header class="app-header">
+      <h1>Minha Lista de Tarefas</h1>
+      <p class="subtitle">Organize suas atividades diárias com facilidade</p>
+    </header>
+
+    <!-- Formulário para adicionar uma nova tarefa -->
+    <form id="task-form" class="task-form">
+      <input 
+        type="text" 
+        id="task-input" 
+        placeholder="O que você precisa fazer?" 
+        autocomplete="off"
+        required
+      />
+      <button type="submit" id="add-btn">Adicionar</button>
+    </form>
+
+    <!-- Barra de status e filtros -->
+    <div class="task-summary">
+      <span id="task-counter">0 tarefas no total</span>
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Todas</button>
+        <button class="filter-btn" data-filter="pending">Pendentes</button>
+        <button class="filter-btn" data-filter="completed">Concluídas</button>
+      </div>
+    </div>
+
+    <!-- Lista onde os itens de tarefa serão inseridos dinamicamente pelo JavaScript -->
+    <ul id="task-list" class="task-list">
+      <!-- As tarefas serão inseridas aqui via JavaScript -->
+    </ul>
+
+    <!-- Mensagem exibida quando não houver tarefas cadastradas -->
+    <div id="empty-state" class="empty-state">
+      <p>Nenhuma tarefa por aqui ainda. Que tal adicionar uma acima?</p>
+    </div>
+
+  </main>
+
+  <!-- Script com toda a lógica da aplicação -->
+  <script src="script.js"></script>
+</body>
+</html>
