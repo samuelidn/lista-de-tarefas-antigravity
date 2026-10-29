@@ -8,7 +8,7 @@ Uma aplicação simples, moderna e intuitiva de lista de tarefas criada com as t
 
 Você não precisa instalar nenhuma ferramenta, biblioteca ou servidor para rodar este projeto:
 
-1. Localize a pasta do projeto no seu computador (`Aula 3 imersao`).
+1. Localize a pasta do projeto no seu computador.
 2. Dê um **duplo clique no arquivo `index.html`** (ou clique com o botão direito e escolha "Abrir com" > seu navegador favorito, como Chrome, Edge ou Firefox).
 3. A aplicação abrirá imediatamente pronta para uso!
 
@@ -19,7 +19,6 @@ Você não precisa instalar nenhuma ferramenta, biblioteca ou servidor para roda
 O projeto foi dividido intencionalmente em três arquivos para separar as responsabilidades de forma clara:
 
 ```
-Aula 3 imersao/
 ├── index.html   # Estrutura e conteúdo da página (O esqueleto)
 ├── style.css    # Aparência visual, cores e layout (A roupa / design)
 ├── script.js    # Lógica, interatividade e armazenamento (O cérebro)
