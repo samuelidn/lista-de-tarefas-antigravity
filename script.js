@@ -1,242 +1,572 @@
 /**
- * ==============================================================================
- * APLICAÇÃO DE LISTA DE TAREFAS (TO-DO LIST)
- * ==============================================================================
- * Este arquivo JavaScript gerencia toda a interatividade e lógica da aplicação:
- * 1. Estado da aplicação (dados em memória e no localStorage)
- * 2. Manipulação do DOM (adicionar, alterar e remover elementos visuais)
- * 3. Escuta de eventos (cliques de botão, digitação, envio de formulário)
+ * ============================================================
+ * LISTA DE TAREFAS — script.js
+ * ============================================================
+ *
+ * Seções:
+ *  1. Seleção de elementos do DOM
+ *  2. Estado da aplicação
+ *  3. Funções de Tarefas (CRUD)
+ *  4. Persistência (localStorage)
+ *  5. Renderização
+ *  6. Produtividade / Resumo
+ *  7. Tema claro / escuro
+ *  8. Modal de confirmação
+ *  9. Event listeners
+ * 10. Inicialização
  */
 
-// ==============================================================================
-// 1. SELEÇÃO DE ELEMENTOS DO DOM (DOCUMENT OBJECT MODEL)
-// Guardamos referências aos elementos HTML com os quais vamos interagir.
-// ==============================================================================
-const taskForm = document.getElementById("task-form");
-const taskInput = document.getElementById("task-input");
-const taskList = document.getElementById("task-list");
-const emptyState = document.getElementById("empty-state");
-const taskCounter = document.getElementById("task-counter");
-const filterButtons = document.querySelectorAll(".filter-btn");
+// ============================================================
+// 1. SELEÇÃO DE ELEMENTOS DO DOM
+// ============================================================
+const taskForm          = document.getElementById('task-form');
+const taskInput         = document.getElementById('task-input');
+const taskCategoryEl    = document.getElementById('task-category');
+const taskPriorityEl    = document.getElementById('task-priority');
+const taskDueDateEl     = document.getElementById('task-due-date');
+const taskList          = document.getElementById('task-list');
+const emptyState        = document.getElementById('empty-state');
+const searchInput       = document.getElementById('search-input');
+const clearCompletedBtn = document.getElementById('clear-completed-btn');
+const sortSelect        = document.getElementById('sort-select');
+const themeToggleBtn    = document.getElementById('theme-toggle');
+const themeIcon         = themeToggleBtn.querySelector('.theme-icon');
 
-// ==============================================================================
-// 2. ESTADO DA APLICAÇÃO (DADOS)
-// Um array (lista) de objetos que armazena todas as tarefas.
-// Cada tarefa tem o formato: { id: number, text: string, completed: boolean }
-// ==============================================================================
-let tasks = loadTasksFromStorage();
-let currentFilter = "all"; // Pode ser: 'all', 'pending', 'completed'
+// Elementos de produtividade
+const statTotal         = document.getElementById('stat-total');
+const statDoneToday     = document.getElementById('stat-done-today');
+const statOverdue       = document.getElementById('stat-overdue');
+const statPercent       = document.getElementById('stat-percent');
+const progressBarFill   = document.getElementById('progress-bar-fill');
 
-// ==============================================================================
-// 3. FUNÇÕES PRINCIPAIS DE MANIPULAÇÃO DE TAREFAS
-// ==============================================================================
+// Modal
+const confirmModal      = document.getElementById('confirm-modal');
+const modalCancel       = document.getElementById('modal-cancel');
+const modalConfirm      = document.getElementById('modal-confirm');
+
+// ============================================================
+// 2. ESTADO DA APLICAÇÃO
+// ============================================================
+/**
+ * Cada tarefa tem o formato:
+ * {
+ *   id:           number,   — identificador único
+ *   text:         string,   — descrição da tarefa
+ *   completed:    boolean,  — se está concluída
+ *   priority:     string,   — 'alta' | 'media' | 'baixa'
+ *   category:     string,   — 'geral' | 'estudos' | 'trabalho' | 'pessoal'
+ *   dueDate:      string,   — 'YYYY-MM-DD' ou ''
+ *   createdAt:    number,   — timestamp de criação (Date.now())
+ *   completedAt:  number|null — timestamp de conclusão (ou null)
+ * }
+ */
+let tasks         = loadTasksFromStorage();
+let currentFilter = 'all';     // Filtro de status
+let currentCat    = 'all';     // Filtro de categoria
+let currentSort   = 'date_desc';
+let searchQuery   = '';
+let currentTheme  = localStorage.getItem('theme') || 'light';
+
+// Aplica o tema salvo imediatamente ao carregar
+applyTheme(currentTheme);
+
+// ============================================================
+// 3. FUNÇÕES DE TAREFAS (CRUD)
+// ============================================================
 
 /**
- * Adiciona uma nova tarefa à lista
- * @param {string} text - O título ou descrição da tarefa
+ * Adiciona uma nova tarefa ao array e salva.
  */
-function addTask(text) {
-  const trimmedText = text.trim();
-  
-  // Se o texto estiver vazio, não fazemos nada
-  if (trimmedText === "") return;
+function addTask(text, category, priority, dueDate) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
 
-  // Cria um novo objeto representando a tarefa
   const newTask = {
-    id: Date.now() + Math.random(), // Gera um identificador único (timestamp + aleatório)
-    text: trimmedText,
-    completed: false
+    id:          Date.now() + Math.random(),
+    text:        trimmed,
+    completed:   false,
+    priority:    priority  || 'media',
+    category:    category  || 'geral',
+    dueDate:     dueDate   || '',
+    createdAt:   Date.now(),
+    completedAt: null
   };
 
-  // Adiciona a nova tarefa no início da lista (array)
   tasks.unshift(newTask);
-
-  // Salva no armazenamento do navegador e atualiza a tela
   saveTasksToStorage();
   render();
 }
 
 /**
- * Alterna o estado de concluído de uma tarefa (true <-> false)
- * @param {number} id - O ID da tarefa a ser alterada
+ * Alterna o estado concluída ↔ pendente de uma tarefa.
+ * Registra o timestamp de conclusão quando concluída.
  */
 function toggleTask(id) {
-  // Procura a tarefa no array pelo ID
   tasks = tasks.map(task => {
-    if (task.id === id) {
-      return { ...task, completed: !task.completed };
-    }
-    return task;
+    if (task.id !== id) return task;
+    const nowDone = !task.completed;
+    return {
+      ...task,
+      completed:   nowDone,
+      completedAt: nowDone ? Date.now() : null
+    };
   });
-
   saveTasksToStorage();
   render();
 }
 
 /**
- * Remove uma tarefa da lista pelo seu ID
- * @param {number} id - O ID da tarefa a ser removida
+ * Salva o novo texto de uma tarefa após edição inline.
+ */
+function saveTaskEdit(id, newText) {
+  const trimmed = newText.trim();
+  if (!trimmed) return; // não salva texto vazio
+  tasks = tasks.map(task =>
+    task.id === id ? { ...task, text: trimmed } : task
+  );
+  saveTasksToStorage();
+  render();
+}
+
+/**
+ * Remove uma tarefa pelo id.
  */
 function deleteTask(id) {
-  // Filtra a lista, mantendo apenas as tarefas cujo ID seja diferente do selecionado
   tasks = tasks.filter(task => task.id !== id);
-
   saveTasksToStorage();
   render();
 }
 
-// ==============================================================================
-// 4. PERSISTÊNCIA DE DADOS (LOCALSTORAGE)
-// Permite salvar as tarefas no próprio navegador para não perder ao recarregar a página.
-// ==============================================================================
-
 /**
- * Salva a lista de tarefas atual no localStorage convertida em texto JSON
+ * Remove todas as tarefas já concluídas.
  */
+function clearCompleted() {
+  tasks = tasks.filter(task => !task.completed);
+  saveTasksToStorage();
+  render();
+}
+
+// ============================================================
+// 4. PERSISTÊNCIA (localStorage)
+// ============================================================
 function saveTasksToStorage() {
   try {
-    localStorage.setItem("my_tasks_data", JSON.stringify(tasks));
+    localStorage.setItem('my_tasks_data', JSON.stringify(tasks));
   } catch (e) {
-    console.warn("Armazenamento local indisponível:", e);
+    console.warn('Não foi possível salvar no localStorage:', e);
   }
 }
 
-/**
- * Carrega as tarefas salvas no localStorage. Se não houver nada, retorna um array vazio.
- */
 function loadTasksFromStorage() {
   try {
-    const savedData = localStorage.getItem("my_tasks_data");
-    if (savedData) {
-      return JSON.parse(savedData);
-    }
+    const raw = localStorage.getItem('my_tasks_data');
+    if (raw) return JSON.parse(raw);
   } catch (e) {
-    console.error("Erro ao ler dados salvos:", e);
+    console.error('Erro ao carregar tarefas:', e);
   }
   return [];
 }
 
-// ==============================================================================
-// 5. ATUALIZAÇÃO DA TELA (RENDERIZAÇÃO)
-// Converte os dados do array 'tasks' em elementos visuais HTML.
-// ==============================================================================
+// ============================================================
+// 5. RENDERIZAÇÃO
+// ============================================================
 
+/**
+ * Função principal de renderização.
+ * Aplica filtros, busca e ordenação; depois gera o HTML de cada tarefa.
+ */
 function render() {
-  // Limpa o conteúdo atual da lista antes de redesenhar
-  taskList.innerHTML = "";
+  taskList.innerHTML = '';
 
-  // Filtra as tarefas conforme a aba selecionada (Todas, Pendentes, Concluídas)
-  const filteredTasks = tasks.filter(task => {
-    if (currentFilter === "pending") return !task.completed;
-    if (currentFilter === "completed") return task.completed;
-    return true; // "all"
+  // 5a. Filtrar por status
+  let visible = tasks.filter(task => {
+    if (currentFilter === 'pending')   return !task.completed;
+    if (currentFilter === 'completed') return  task.completed;
+    return true;
   });
 
-  // Controla a exibição da mensagem de "lista vazia"
-  if (filteredTasks.length === 0) {
-    emptyState.classList.remove("hidden");
-  } else {
-    emptyState.classList.add("hidden");
+  // 5b. Filtrar por categoria
+  if (currentCat !== 'all') {
+    visible = visible.filter(task => task.category === currentCat);
   }
 
-  // Cria e adiciona cada item de tarefa no DOM
-  filteredTasks.forEach(task => {
-    const li = document.createElement("li");
-    li.className = `task-item ${task.completed ? "completed" : "pending"}`;
+  // 5c. Filtrar pela busca (nome)
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase();
+    visible = visible.filter(task => task.text.toLowerCase().includes(q));
+  }
 
-    // Monta a estrutura HTML interna de cada item com identificação clara de estado
-    li.innerHTML = `
-      <label class="task-content">
-        <input 
-          type="checkbox" 
-          class="task-checkbox" 
-          ${task.completed ? "checked" : ""}
-          aria-label="Marcar tarefa como ${task.completed ? "pendente" : "concluída"}"
-        />
-        <div class="task-details">
-          <span class="task-text">${escapeHtml(task.text)}</span>
-          <span class="status-badge ${task.completed ? "badge-completed" : "badge-pending"}">
-            ${task.completed ? "✓ Concluída" : "Pendente"}
-          </span>
-        </div>
-      </label>
-      <button class="delete-btn" title="Excluir tarefa" aria-label="Excluir tarefa">&times;</button>
-    `;
+  // 5d. Ordenar
+  visible = sortTasks(visible, currentSort);
 
-    // Evento de alternar status ao interagir com o checkbox
-    const checkbox = li.querySelector(".task-checkbox");
-    checkbox.addEventListener("change", () => {
-      toggleTask(task.id);
-    });
+  // 5e. Estado vazio
+  emptyState.classList.toggle('hidden', visible.length > 0);
 
-    // Evento de exclusão ao clicar no botão 'X'
-    const deleteBtn = li.querySelector(".delete-btn");
-    deleteBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation(); // Impede que o clique acione o label
-      deleteTask(task.id);
-    });
-
-    // Adiciona o elemento criado dentro da lista na página
+  // 5f. Renderizar cada item
+  visible.forEach(task => {
+    const li = buildTaskElement(task);
     taskList.appendChild(li);
   });
 
-  // Atualiza os contadores no resumo
-  updateSummary();
+  // 5g. Atualizar painel de produtividade
+  updateProductivity();
 }
 
 /**
- * Atualiza o texto do contador de tarefas (ex: '2 de 5 tarefas concluídas')
+ * Ordena o array conforme a opção escolhida.
  */
-function updateSummary() {
-  const total = tasks.length;
-  const completed = tasks.filter(t => t.completed).length;
+function sortTasks(list, sort) {
+  const priorityOrder = { alta: 0, media: 1, baixa: 2 };
+  return [...list].sort((a, b) => {
+    switch (sort) {
+      case 'priority':
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      case 'due_date':
+        // Tarefas sem data ficam por último
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      case 'alpha':
+        return a.text.localeCompare(b.text, 'pt-BR');
+      default: // date_desc (mais recentes primeiro)
+        return b.createdAt - a.createdAt;
+    }
+  });
+}
 
-  if (total === 0) {
-    taskCounter.textContent = "0 tarefas no total";
-  } else {
-    taskCounter.textContent = `${completed} de ${total} tarefa(s) concluída(s)`;
+/**
+ * Cria e retorna o elemento <li> completo de uma tarefa.
+ */
+function buildTaskElement(task) {
+  const li = document.createElement('li');
+  li.className = [
+    'task-item',
+    task.completed ? 'completed' : '',
+    `priority-${task.priority}`
+  ].join(' ').trim();
+  li.dataset.id = task.id;
+
+  // --- Checkbox ---
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'task-checkbox';
+  checkbox.checked = task.completed;
+  checkbox.setAttribute('aria-label', task.completed ? 'Marcar como pendente' : 'Marcar como concluída');
+  checkbox.addEventListener('change', () => toggleTask(task.id));
+
+  // --- Corpo ---
+  const body = document.createElement('div');
+  body.className = 'task-body';
+
+  // Linha do texto
+  const topRow = document.createElement('div');
+  topRow.className = 'task-top';
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'task-text';
+  textSpan.textContent = task.text;
+  topRow.appendChild(textSpan);
+
+  // Linha de metadados (badges)
+  const metaRow = document.createElement('div');
+  metaRow.className = 'task-meta';
+
+  // Badge de status
+  const statusBadge = document.createElement('span');
+  statusBadge.className = `badge ${task.completed ? 'badge-status-done' : 'badge-status-pending'}`;
+  statusBadge.textContent = task.completed ? '✓ Concluída' : 'Pendente';
+  metaRow.appendChild(statusBadge);
+
+  // Badge de prioridade
+  const priBadge = document.createElement('span');
+  priBadge.className = `badge badge-priority-${task.priority}`;
+  const priLabels = { alta: '🔴 Alta', media: '🟡 Média', baixa: '🟢 Baixa' };
+  priBadge.textContent = priLabels[task.priority];
+  metaRow.appendChild(priBadge);
+
+  // Badge de categoria
+  const catBadge = document.createElement('span');
+  catBadge.className = 'badge badge-category';
+  const catLabels = { geral: '📋 Geral', estudos: '📚 Estudos', trabalho: '💼 Trabalho', pessoal: '🏠 Pessoal' };
+  catBadge.textContent = catLabels[task.category] || task.category;
+  metaRow.appendChild(catBadge);
+
+  // Badge de vencimento (só se tiver data)
+  if (task.dueDate) {
+    const dueBadge = buildDueBadge(task.dueDate);
+    metaRow.appendChild(dueBadge);
   }
+
+  body.appendChild(topRow);
+  body.appendChild(metaRow);
+
+  // --- Botões de ação ---
+  const actions = document.createElement('div');
+  actions.className = 'task-actions';
+
+  // Botão Editar
+  const editBtn = document.createElement('button');
+  editBtn.className = 'task-action-btn edit-btn';
+  editBtn.title = 'Editar tarefa';
+  editBtn.setAttribute('aria-label', 'Editar tarefa');
+  editBtn.textContent = '✏️';
+  editBtn.addEventListener('click', () => startInlineEdit(li, task, textSpan, editBtn));
+  actions.appendChild(editBtn);
+
+  // Botão Excluir
+  const delBtn = document.createElement('button');
+  delBtn.className = 'task-action-btn delete-btn';
+  delBtn.title = 'Excluir tarefa';
+  delBtn.setAttribute('aria-label', 'Excluir tarefa');
+  delBtn.textContent = '🗑';
+  delBtn.addEventListener('click', () => deleteTask(task.id));
+  actions.appendChild(delBtn);
+
+  li.appendChild(checkbox);
+  li.appendChild(body);
+  li.appendChild(actions);
+
+  return li;
 }
 
 /**
- * Função utilitária para evitar que códigos maliciosos inseridos pelo usuário
- * quebrem o HTML (Segurança básica contra XSS)
+ * Cria o badge de vencimento com estilo de alerta conforme a data.
  */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+function buildDueBadge(dueDate) {
+  const badge = document.createElement('span');
+  badge.className = 'badge badge-due';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate + 'T00:00:00'); // força interpretação local
+  const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
+
+  let icon = '📅';
+  let label = formatDateBR(dueDate);
+
+  if (diffDays < 0) {
+    badge.classList.add('due-overdue');
+    icon = '⚠️';
+    label = `Atrasada (${formatDateBR(dueDate)})`;
+  } else if (diffDays <= 2) {
+    badge.classList.add('due-soon');
+    icon = '⏰';
+    label = diffDays === 0 ? 'Vence hoje' : diffDays === 1 ? 'Vence amanhã' : `Vence em ${diffDays} dias`;
+  }
+
+  badge.textContent = `${icon} ${label}`;
+  return badge;
 }
 
-// ==============================================================================
-// 6. ESCUTADORES DE EVENTOS GLOBAIS (EVENT LISTENERS)
-// ==============================================================================
+/**
+ * Converte 'YYYY-MM-DD' para 'DD/MM/YYYY'.
+ */
+function formatDateBR(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
 
-// Evento quando o formulário é enviado (clique no botão ou pressionar "Enter")
-taskForm.addEventListener("submit", (event) => {
-  event.preventDefault(); // Impede o recarregamento padrão da página
+/**
+ * Inicia o modo de edição inline substituindo o <span> por um <input>.
+ */
+function startInlineEdit(li, task, textSpan, editBtn) {
+  // Evita abrir dois inputs simultâneos
+  if (li.querySelector('.task-edit-input')) return;
 
-  addTask(taskInput.value);
-  taskInput.value = ""; // Limpa o campo de texto
-  taskInput.focus();    // Mantém o cursor no campo de texto para facilitar
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'task-edit-input';
+  input.value = task.text;
+  input.setAttribute('aria-label', 'Editar texto da tarefa');
+
+  // Substitui o span pelo input
+  textSpan.replaceWith(input);
+  input.focus();
+  input.select();
+
+  // Troca o botão de editar pelo de salvar
+  editBtn.textContent = '💾';
+  editBtn.className = 'task-action-btn save-btn';
+  editBtn.title = 'Salvar edição';
+  editBtn.setAttribute('aria-label', 'Salvar edição da tarefa');
+
+  // Confirmar com Enter ou clicando em Salvar
+  const confirm = () => {
+    saveTaskEdit(task.id, input.value);
+  };
+
+  editBtn.onclick = confirm;
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirm();
+    if (e.key === 'Escape') render(); // cancela
+  });
+
+  // Clicar fora também cancela (restaura estado sem salvar)
+  input.addEventListener('blur', () => {
+    // Pequeno delay para permitir que o clique em "Salvar" seja processado antes
+    setTimeout(() => {
+      if (document.contains(input)) render();
+    }, 150);
+  });
+}
+
+// ============================================================
+// 6. PRODUTIVIDADE / RESUMO
+// ============================================================
+
+/**
+ * Atualiza os indicadores de produtividade no topo da tela.
+ */
+function updateProductivity() {
+  const total     = tasks.length;
+  const completed = tasks.filter(t => t.completed).length;
+  const percent   = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  // Concluídas HOJE
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const doneToday = tasks.filter(t =>
+    t.completed && t.completedAt && t.completedAt >= todayStart.getTime()
+  ).length;
+
+  // Atrasadas (não concluídas e com data passada)
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const overdue = tasks.filter(t => {
+    if (t.completed || !t.dueDate) return false;
+    return new Date(t.dueDate + 'T00:00:00') < now;
+  }).length;
+
+  statTotal.textContent     = total;
+  statDoneToday.textContent = doneToday;
+  statOverdue.textContent   = overdue;
+  statPercent.textContent   = percent + '%';
+  progressBarFill.style.width = percent + '%';
+}
+
+// ============================================================
+// 7. TEMA CLARO / ESCURO
+// ============================================================
+
+/**
+ * Aplica o tema ao atributo data-theme do <html> e atualiza o ícone.
+ */
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+  applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+}
+
+// ============================================================
+// 8. MODAL DE CONFIRMAÇÃO
+// ============================================================
+
+let confirmCallback = null;
+
+/**
+ * Abre o modal pedindo confirmação antes de executar a ação.
+ */
+function openConfirmModal(message, onConfirm) {
+  document.getElementById('modal-message').textContent = message;
+  confirmCallback = onConfirm;
+  confirmModal.hidden = false;
+  modalConfirm.focus();
+}
+
+function closeModal() {
+  confirmModal.hidden = true;
+  confirmCallback = null;
+}
+
+// ============================================================
+// 9. EVENT LISTENERS
+// ============================================================
+
+// Submissão do formulário (adicionar tarefa)
+taskForm.addEventListener('submit', e => {
+  e.preventDefault();
+  addTask(
+    taskInput.value,
+    taskCategoryEl.value,
+    taskPriorityEl.value,
+    taskDueDateEl.value
+  );
+  taskInput.value   = '';
+  taskDueDateEl.value = '';
+  taskInput.focus();
 });
 
-// Eventos para os botões de filtro (Todas, Pendentes, Concluídas)
-filterButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    // Remove a classe 'active' de todos e adiciona no botão clicado
-    filterButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+// Busca em tempo real
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value;
+  render();
+});
 
-    // Atualiza o filtro atual e redesenha a lista
+// Botão limpar concluídas (abre modal de confirmação)
+clearCompletedBtn.addEventListener('click', () => {
+  const count = tasks.filter(t => t.completed).length;
+  if (count === 0) return;
+  openConfirmModal(
+    `Deseja remover permanentemente ${count} tarefa(s) concluída(s)? Essa ação não pode ser desfeita.`,
+    clearCompleted
+  );
+});
+
+// Ordenação
+sortSelect.addEventListener('change', () => {
+  currentSort = sortSelect.value;
+  render();
+});
+
+// Alternador de tema
+themeToggleBtn.addEventListener('click', toggleTheme);
+
+// Filtros de status
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     currentFilter = btn.dataset.filter;
     render();
   });
 });
 
-// ==============================================================================
-// 7. INICIALIZAÇÃO DA APLICAÇÃO
-// Renderiza a lista com o que estiver salvo assim que a página é carregada
-// ==============================================================================
+// Filtros de categoria
+document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    render();
+  });
+});
+
+// Modal — cancelar
+modalCancel.addEventListener('click', closeModal);
+
+// Modal — confirmar
+modalConfirm.addEventListener('click', () => {
+  if (typeof confirmCallback === 'function') confirmCallback();
+  closeModal();
+});
+
+// Fechar modal clicando no overlay (fora da caixa)
+confirmModal.addEventListener('click', e => {
+  if (e.target === confirmModal) closeModal();
+});
+
+// Fechar modal com Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !confirmModal.hidden) closeModal();
+});
+
+// ============================================================
+// 10. INICIALIZAÇÃO
+// ============================================================
 render();

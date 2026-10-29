@@ -1,61 +1,167 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de Tarefas</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Fonte moderna do Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Container principal centralizado na tela -->
   <main class="app-container">
-    
-    <!-- Cabeçalho da aplicação -->
+
+    <!-- ===== CABEÇALHO ===== -->
     <header class="app-header">
-      <h1>Minha Lista de Tarefas</h1>
-      <p class="subtitle">Organize suas atividades diárias com facilidade</p>
+      <div class="header-top">
+        <div class="header-title">
+          <h1>Lista de Tarefas</h1>
+          <p class="subtitle">Organize suas atividades com facilidade</p>
+        </div>
+        <!-- Botão de alternar tema claro/escuro -->
+        <button id="theme-toggle" class="icon-btn" title="Alternar tema" aria-label="Alternar tema claro/escuro">
+          <span class="theme-icon">🌙</span>
+        </button>
+      </div>
+
+      <!-- ===== RESUMO DE PRODUTIVIDADE ===== -->
+      <div class="productivity-bar">
+        <div class="productivity-stats">
+          <span class="stat-item">
+            <strong id="stat-total">0</strong> tarefas
+          </span>
+          <span class="stat-divider">|</span>
+          <span class="stat-item">
+            <strong id="stat-done-today">0</strong> concluídas hoje
+          </span>
+          <span class="stat-divider">|</span>
+          <span class="stat-item">
+            <strong id="stat-overdue">0</strong> atrasadas
+          </span>
+        </div>
+        <div class="progress-wrapper">
+          <div class="progress-bar-track">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+          <span id="stat-percent" class="stat-percent">0%</span>
+        </div>
+      </div>
     </header>
 
-    <!-- Formulário para adicionar uma nova tarefa -->
-    <form id="task-form" class="task-form">
-      <input 
-        type="text" 
-        id="task-input" 
-        placeholder="O que você precisa fazer?" 
-        autocomplete="off"
-        required
-      />
-      <button type="submit" id="add-btn">Adicionar</button>
-    </form>
+    <!-- ===== FORMULÁRIO DE NOVA TAREFA ===== -->
+    <section class="task-form-section">
+      <form id="task-form" class="task-form">
+        <div class="form-row">
+          <input
+            type="text"
+            id="task-input"
+            class="task-input-main"
+            placeholder="O que você precisa fazer?"
+            autocomplete="off"
+            required
+          />
+          <button type="submit" class="btn btn-primary" id="add-btn">+ Adicionar</button>
+        </div>
+        <div class="form-row form-row-extra">
+          <!-- Categoria -->
+          <select id="task-category" class="form-select" aria-label="Categoria">
+            <option value="geral">📋 Geral</option>
+            <option value="estudos">📚 Estudos</option>
+            <option value="trabalho">💼 Trabalho</option>
+            <option value="pessoal">🏠 Pessoal</option>
+          </select>
+          <!-- Prioridade -->
+          <select id="task-priority" class="form-select" aria-label="Prioridade">
+            <option value="media">🟡 Média</option>
+            <option value="alta">🔴 Alta</option>
+            <option value="baixa">🟢 Baixa</option>
+          </select>
+          <!-- Data de vencimento -->
+          <input
+            type="date"
+            id="task-due-date"
+            class="form-select"
+            aria-label="Data de vencimento"
+          />
+        </div>
+      </form>
+    </section>
 
-    <!-- Barra de status e filtros -->
-    <div class="task-summary">
-      <span id="task-counter">0 tarefas no total</span>
-      <div class="filters">
-        <button class="filter-btn active" data-filter="all">Todas</button>
-        <button class="filter-btn" data-filter="pending">Pendentes</button>
-        <button class="filter-btn" data-filter="completed">Concluídas</button>
+    <!-- ===== BARRA DE BUSCA E CONTROLES ===== -->
+    <section class="controls-section">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="Buscar tarefas..."
+          aria-label="Buscar tarefas pelo nome"
+        />
       </div>
-    </div>
+      <button id="clear-completed-btn" class="btn btn-danger-outline" title="Remover todas as tarefas concluídas">
+        🗑 Limpar concluídas
+      </button>
+    </section>
 
-    <!-- Lista onde os itens de tarefa serão inseridos dinamicamente pelo JavaScript -->
-    <ul id="task-list" class="task-list">
-      <!-- As tarefas serão inseridas aqui via JavaScript -->
-    </ul>
+    <!-- ===== FILTROS E ORDENAÇÃO ===== -->
+    <section class="filters-section">
+      <!-- Filtro de status -->
+      <div class="filter-group">
+        <span class="filter-label">Status:</span>
+        <div class="filter-tabs" role="group" aria-label="Filtrar por status">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="pending">Pendentes</button>
+          <button class="filter-btn" data-filter="completed">Concluídas</button>
+        </div>
+      </div>
+      <!-- Filtro de categoria -->
+      <div class="filter-group">
+        <span class="filter-label">Categoria:</span>
+        <div class="filter-tabs" role="group" aria-label="Filtrar por categoria">
+          <button class="cat-filter-btn active" data-cat="all">Todas</button>
+          <button class="cat-filter-btn" data-cat="geral">📋 Geral</button>
+          <button class="cat-filter-btn" data-cat="estudos">📚 Estudos</button>
+          <button class="cat-filter-btn" data-cat="trabalho">💼 Trabalho</button>
+          <button class="cat-filter-btn" data-cat="pessoal">🏠 Pessoal</button>
+        </div>
+      </div>
+      <!-- Ordenação -->
+      <div class="filter-group">
+        <span class="filter-label">Ordenar:</span>
+        <select id="sort-select" class="form-select form-select-sm" aria-label="Ordenar tarefas">
+          <option value="date_desc">Mais recentes</option>
+          <option value="priority">Prioridade</option>
+          <option value="due_date">Vencimento</option>
+          <option value="alpha">A → Z</option>
+        </select>
+      </div>
+    </section>
 
-    <!-- Mensagem exibida quando não houver tarefas cadastradas -->
+    <!-- ===== LISTA DE TAREFAS ===== -->
+    <ul id="task-list" class="task-list" aria-label="Lista de tarefas"></ul>
+
+    <!-- Estado vazio -->
     <div id="empty-state" class="empty-state">
-      <p>Nenhuma tarefa por aqui ainda. Que tal adicionar uma acima?</p>
+      <p>Nenhuma tarefa encontrada. Que tal adicionar uma acima?</p>
     </div>
 
   </main>
 
-  <!-- Script com toda a lógica da aplicação -->
+  <!-- ===== MODAL DE CONFIRMAÇÃO ===== -->
+  <div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-box">
+      <h2 id="modal-title" class="modal-title">Confirmar exclusão</h2>
+      <p id="modal-message" class="modal-message">Deseja remover todas as tarefas concluídas?</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-outline">Cancelar</button>
+        <button id="modal-confirm" class="btn btn-danger">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>

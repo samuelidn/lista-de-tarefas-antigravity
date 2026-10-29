@@ -1,317 +1,706 @@
-/* ==========================================================================
-   VARIÁVEIS DE CORES E ESTILOS GLOBAIS
-   Facilita alterar cores e manter consistência visual no projeto.
-   ========================================================================== */
-:root {
-  --primary-color: #4f46e5;       /* Roxo/Azul principal */
-  --primary-hover: #4338ca;       /* Cor ao passar o mouse */
-  --background: #f3f4f6;          /* Fundo da página */
-  --card-bg: #ffffff;             /* Fundo do cartão central */
-  --text-main: #1f2937;           /* Texto principal escuro */
-  --text-muted: #6b7280;          /* Texto secundário/cinza */
-  --border-color: #e5e7eb;        /* Cor das bordas e divisores */
-  --success-color: #10b981;       /* Verde para tarefas concluídas */
-  --danger-color: #ef4444;        /* Vermelho para botão de remover */
-  --danger-hover: #dc2626;        /* Vermelho escuro no hover */
-  --radius: 12px;                 /* Arredondamento padrão de bordas */
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+/* ===========================================================================
+   VARIÁVEIS DE TEMA (CLARO E ESCURO)
+   Usando [data-theme] no <html> para alternar os temas sem duplicar regras.
+   =========================================================================== */
+:root,
+[data-theme="light"] {
+  --bg-page:        #f1f5f9;
+  --bg-card:        #ffffff;
+  --bg-input:       #ffffff;
+  --bg-item:        #ffffff;
+  --bg-item-done:   #f0fdf4;
+  --bg-hover:       #f8fafc;
+  --bg-modal:       #ffffff;
+  --bg-overlay:     rgba(0, 0, 0, 0.45);
+
+  --text-main:      #0f172a;
+  --text-sub:       #475569;
+  --text-muted:     #94a3b8;
+  --text-inverted:  #ffffff;
+
+  --border:         #e2e8f0;
+  --border-done:    #bbf7d0;
+  --border-focus:   #6366f1;
+
+  --primary:        #6366f1;
+  --primary-hover:  #4f46e5;
+  --primary-light:  #eef2ff;
+
+  --success:        #10b981;
+  --success-light:  #dcfce7;
+  --danger:         #ef4444;
+  --danger-hover:   #dc2626;
+  --danger-light:   #fee2e2;
+  --warning:        #f59e0b;
+  --warning-light:  #fef9c3;
+
+  /* Prioridades */
+  --high-color:     #ef4444;
+  --high-bg:        #fee2e2;
+  --medium-color:   #f59e0b;
+  --medium-bg:      #fef9c3;
+  --low-color:      #10b981;
+  --low-bg:         #dcfce7;
+
+  /* Progresso */
+  --progress-track: #e2e8f0;
+  --shadow:         0 4px 24px -4px rgba(0,0,0,0.08), 0 2px 8px -2px rgba(0,0,0,0.04);
+  --shadow-sm:      0 1px 4px rgba(0,0,0,0.06);
 }
 
-/* ==========================================================================
-   RESET E CONFIGURAÇÕES BÁSICAS
-   ========================================================================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+[data-theme="dark"] {
+  --bg-page:        #0f172a;
+  --bg-card:        #1e293b;
+  --bg-input:       #1e293b;
+  --bg-item:        #253347;
+  --bg-item-done:   #1a2e22;
+  --bg-hover:       #2d3f55;
+  --bg-modal:       #1e293b;
+  --bg-overlay:     rgba(0, 0, 0, 0.65);
+
+  --text-main:      #f1f5f9;
+  --text-sub:       #94a3b8;
+  --text-muted:     #64748b;
+  --text-inverted:  #0f172a;
+
+  --border:         #334155;
+  --border-done:    #166534;
+  --border-focus:   #818cf8;
+
+  --primary:        #818cf8;
+  --primary-hover:  #6366f1;
+  --primary-light:  #1e1b4b;
+
+  --success:        #34d399;
+  --success-light:  #064e3b;
+  --danger:         #f87171;
+  --danger-hover:   #ef4444;
+  --danger-light:   #450a0a;
+  --warning:        #fbbf24;
+  --warning-light:  #451a03;
+
+  --high-color:     #f87171;
+  --high-bg:        #450a0a;
+  --medium-color:   #fbbf24;
+  --medium-bg:      #451a03;
+  --low-color:      #34d399;
+  --low-bg:         #064e3b;
+
+  --progress-track: #334155;
+  --shadow:         0 4px 24px -4px rgba(0,0,0,0.4);
+  --shadow-sm:      0 1px 4px rgba(0,0,0,0.3);
 }
+
+/* ===========================================================================
+   RESET E BASE
+   =========================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--background);
+  background-color: var(--bg-page);
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 40px 16px;
+  padding: 32px 16px 64px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-/* ==========================================================================
+/* ===========================================================================
    CONTAINER PRINCIPAL
-   ========================================================================== */
+   =========================================================================== */
 .app-container {
-  background: var(--card-bg);
+  background: var(--bg-card);
   width: 100%;
-  max-width: 540px;
-  border-radius: var(--radius);
+  max-width: 680px;
+  border-radius: 16px;
   box-shadow: var(--shadow);
-  padding: 32px 24px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: background-color 0.3s;
 }
 
-/* ==========================================================================
+/* ===========================================================================
    CABEÇALHO
-   ========================================================================== */
+   =========================================================================== */
 .app-header {
-  text-align: center;
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.app-header h1 {
-  font-size: 1.75rem;
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-title h1 {
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 6px;
+  line-height: 1.2;
 }
 
-.app-header .subtitle {
-  font-size: 0.925rem;
-  color: var(--text-muted);
+.header-title .subtitle {
+  font-size: 0.875rem;
+  color: var(--text-sub);
+  margin-top: 3px;
 }
 
-/* ==========================================================================
-   FORMULÁRIO DE ENTRADA
-   ========================================================================== */
-.task-form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.task-form input {
-  flex: 1;
-  padding: 12px 16px;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.task-form input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-}
-
-.task-form button {
-  background-color: var(--primary-color);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 0 20px;
-  font-size: 0.95rem;
-  font-weight: 600;
+/* Botão de ícone (tema) */
+.icon-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.task-form button:hover {
-  background-color: var(--primary-hover);
-}
-
-.task-form button:active {
-  transform: scale(0.98);
-}
-
-/* ==========================================================================
-   BARRA DE RESUMO E FILTROS
-   ========================================================================== */
-.task-summary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 16px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  justify-content: center;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
+.icon-btn:hover { background: var(--bg-hover); transform: scale(1.08); }
 
-.filters {
+/* ===========================================================================
+   BARRA DE PRODUTIVIDADE
+   =========================================================================== */
+.productivity-bar {
+  background: var(--primary-light);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.productivity-stats {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-sub);
 }
 
-.filter-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 4px 10px;
-  border-radius: 6px;
+.productivity-stats strong {
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stat-divider { color: var(--border); }
+
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--progress-track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.stat-percent {
   font-size: 0.8rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 34px;
+  text-align: right;
 }
 
-.filter-btn:hover {
-  background-color: #f3f4f6;
-  color: var(--text-main);
+/* ===========================================================================
+   FORMULÁRIO DE NOVA TAREFA
+   =========================================================================== */
+.task-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-.filter-btn.active {
-  background-color: var(--primary-color);
-  color: #ffffff;
-}
-
-/* ==========================================================================
-   LISTA DE TAREFAS
-   ========================================================================== */
-.task-list {
-  list-style: none;
+.task-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Item individual da lista (estilos base compartilhados) */
-.task-item {
+.form-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  transition: all 0.25s ease;
+  gap: 10px;
 }
 
-.task-item:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+.form-row-extra {
+  flex-wrap: wrap;
 }
 
-/* --------------------------------------------------------------------------
-   DIFERENCIAÇÃO VISUAL: TAREFA PENDENTE
-   -------------------------------------------------------------------------- */
-.task-item.pending {
-  background-color: #ffffff;
-  border-left: 5px solid var(--primary-color); /* Borda lateral azul/roxa de destaque */
-}
-
-.task-item.pending:hover {
-  border-color: #cbd5e1;
-  border-left-color: var(--primary-color);
-}
-
-/* --------------------------------------------------------------------------
-   DIFERENCIAÇÃO VISUAL: TAREFA CONCLUÍDA
-   -------------------------------------------------------------------------- */
-.task-item.completed {
-  background-color: #f0fdf4;                   /* Fundo esverdeado suave */
-  border-color: #bbf7d0;                       /* Borda verde clara */
-  border-left: 5px solid var(--success-color); /* Borda lateral verde vibrante */
-  opacity: 0.90;
-}
-
-.task-item.completed:hover {
-  background-color: #e8fbee;
-}
-
-/* Conteúdo da esquerda (checkbox + informações da tarefa) */
-.task-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.task-input-main {
   flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s;
+}
+.task-input-main::placeholder { color: var(--text-muted); }
+.task-input-main:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+.form-select {
+  padding: 9px 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
   cursor: pointer;
+  transition: border-color 0.2s, background-color 0.3s;
+  flex: 1;
+  min-width: 130px;
+}
+.form-select:focus { border-color: var(--border-focus); }
+
+.form-select-sm {
+  min-width: 120px;
+  flex: none;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-width: 1px;
 }
 
-/* Estilo do checkbox */
-.task-checkbox {
-  width: 20px;
-  height: 20px;
+/* ===========================================================================
+   BOTÕES
+   =========================================================================== */
+.btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  accent-color: var(--primary-color);
-  transition: transform 0.15s ease;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-sub);
+}
+.btn-outline:hover { background: var(--bg-hover); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn-danger:hover { background: var(--danger-hover); }
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+.btn-danger-outline:hover { background: var(--danger-light); }
+
+/* ===========================================================================
+   BARRA DE BUSCA E CONTROLES
+   =========================================================================== */
+.controls-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.task-checkbox:hover {
-  transform: scale(1.1);
+.search-wrapper {
+  flex: 1;
+  min-width: 180px;
+  position: relative;
 }
 
-.task-item.completed .task-checkbox {
-  accent-color: var(--success-color); /* Checkbox fica verde na tarefa concluída */
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  pointer-events: none;
 }
 
-/* Container de texto e etiqueta */
-.task-details {
+.search-input {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s, background-color 0.3s;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+
+/* ===========================================================================
+   FILTROS
+   =========================================================================== */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+.filter-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.filter-btn,
+.cat-filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-sub);
+  transition: all 0.18s;
+}
+.filter-btn:hover, .cat-filter-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+.filter-btn.active, .cat-filter-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ===========================================================================
+   LISTA DE TAREFAS
+   =========================================================================== */
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- Item de tarefa ---- */
+.task-item {
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.2s;
+  position: relative;
+}
+.task-item:hover { box-shadow: var(--shadow-sm); }
+
+/* Barra lateral de prioridade */
+.task-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+}
+.task-item.priority-alta::before  { background: var(--high-color); }
+.task-item.priority-media::before { background: var(--medium-color); }
+.task-item.priority-baixa::before { background: var(--low-color); }
+
+/* Estado concluída */
+.task-item.completed {
+  background: var(--bg-item-done);
+  border-color: var(--border-done);
+  opacity: 0.82;
+}
+
+/* Checkbox */
+.task-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 3px;
+  transition: transform 0.15s;
+}
+.task-checkbox:hover { transform: scale(1.15); }
+.task-item.completed .task-checkbox { accent-color: var(--success); }
+
+/* Corpo da tarefa */
+.task-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Linha superior: texto e badges */
+.task-top {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 /* Texto da tarefa */
 .task-text {
   font-size: 0.95rem;
+  font-weight: 500;
   color: var(--text-main);
   word-break: break-word;
-  font-weight: 500;
-  transition: color 0.2s, text-decoration 0.2s;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 100px;
 }
-
-/* Texto quando concluído */
 .task-item.completed .task-text {
   text-decoration: line-through;
-  text-decoration-color: var(--success-color); /* Linha tachada em verde */
+  text-decoration-color: var(--success);
   text-decoration-thickness: 2px;
   color: var(--text-muted);
 }
 
-/* Etiquetas visuais (Badges de status) */
-.status-badge {
-  font-size: 0.725rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 9999px;
+/* Campo de edição inline */
+.task-edit-input {
+  flex: 1;
+  min-width: 100px;
+  border: 2px solid var(--border-focus);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+/* Linha inferior: categoria, prioridade, data */
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Badge genérico */
+.badge {
   display: inline-flex;
   align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  user-select: none;
-  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.status-badge.badge-pending {
-  background-color: #eef2ff;
-  color: var(--primary-color);
-  border: 1px solid #c7d2fe;
+/* Badges de prioridade */
+.badge-priority-alta   { background: var(--high-bg);   color: var(--high-color);   border: 1px solid var(--high-color); }
+.badge-priority-media  { background: var(--medium-bg); color: var(--medium-color); border: 1px solid var(--medium-color); }
+.badge-priority-baixa  { background: var(--low-bg);    color: var(--low-color);    border: 1px solid var(--low-color); }
+
+/* Badge de categoria */
+.badge-category {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary);
 }
 
-.status-badge.badge-completed {
-  background-color: #dcfce7;
-  color: #15803d;
-  border: 1px solid #86efac;
+/* Badge de vencimento */
+.badge-due {
+  background: var(--bg-hover);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+}
+.badge-due.due-overdue {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.badge-due.due-soon {
+  background: var(--warning-light);
+  color: var(--warning);
+  border-color: var(--warning);
 }
 
-/* Botão de remover tarefa */
-.delete-btn {
+/* Badge de status concluída */
+.badge-status-done   { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.badge-status-pending { background: var(--primary-light); color: var(--primary);  border: 1px solid var(--primary); }
+
+/* Ações da tarefa (editar / deletar) */
+.task-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.task-action-btn {
   background: transparent;
-  border: none;
-  color: #9ca3af;
-  font-size: 1.2rem;
-  padding: 4px 8px;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 4px 7px;
+  font-size: 1rem;
   cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.18s, background-color 0.18s;
   line-height: 1;
-  transition: color 0.2s, background-color 0.2s;
 }
+.task-action-btn:hover { color: var(--text-main); background: var(--bg-hover); }
+.task-action-btn.edit-btn:hover { color: var(--primary); }
+.task-action-btn.save-btn { color: var(--success); font-size: 0.75rem; font-weight: 700; }
+.task-action-btn.delete-btn:hover { color: var(--danger); background: var(--danger-light); }
 
-.delete-btn:hover {
-  color: var(--danger-color);
-  background-color: #fee2e2;
-}
-
-/* ==========================================================================
-   ESTADO VAZIO (QUANDO NÃO HÁ TAREFAS)
-   ========================================================================== */
+/* ===========================================================================
+   ESTADO VAZIO
+   =========================================================================== */
 .empty-state {
   text-align: center;
-  padding: 36px 16px;
+  padding: 40px 16px;
   color: var(--text-muted);
-  font-size: 0.925rem;
+  font-size: 0.9rem;
+}
+.empty-state.hidden { display: none; }
+
+/* ===========================================================================
+   MODAL DE CONFIRMAÇÃO
+   =========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal-box {
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.empty-state.hidden {
-  display: none;
+.modal-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+.modal-message { font-size: 0.9rem; color: var(--text-sub); line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+
+/* ===========================================================================
+   RESPONSIVO — TELAS PEQUENAS (< 480px)
+   =========================================================================== */
+@media (max-width: 480px) {
+  body { padding: 0; align-items: flex-start; }
+
+  .app-container {
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100dvh;
+    padding: 20px 16px 60px;
+    gap: 16px;
+  }
+
+  .header-title h1 { font-size: 1.3rem; }
+
+  .form-row { flex-direction: column; }
+  .btn-primary { width: 100%; }
+
+  .form-row-extra { flex-direction: column; }
+  .form-select { min-width: unset; }
+
+  .controls-section { flex-direction: column; align-items: stretch; }
+  .btn-danger-outline { width: 100%; text-align: center; }
+
+  .filter-group { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  .task-item { padding: 10px 12px; gap: 10px; }
+  .task-actions { gap: 2px; }
+}
+
+/* ===========================================================================
+   RESPONSIVO — TELAS MÉDIAS (481px – 720px)
+   =========================================================================== */
+@media (min-width: 481px) and (max-width: 720px) {
+  .form-row-extra { flex-wrap: wrap; }
+  .form-select { min-width: calc(50% - 5px); }
 }
